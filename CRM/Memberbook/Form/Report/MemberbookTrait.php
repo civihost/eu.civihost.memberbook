@@ -8,7 +8,6 @@ trait CRM_Memberbook_MemberbookTrait
 
     public function buildQuery($applyLimit = TRUE)
     {
-
         $sql = parent::buildQuery($applyLimit);
         if (!$this->can_execute_query) {
             $sql = 'select 0 where 1=0';
@@ -17,7 +16,7 @@ trait CRM_Memberbook_MemberbookTrait
             CRM_Core_Session::setStatus($message, $title, $type = 'error', $options = array('expires' => 0));
         }
         $sql = str_replace("(SELECT SQL_CALC_FOUND_ROWS", "(SELECT", $sql);
-        //Civi::log()->debug($sql);
+        Civi::log()->debug($sql);
         return $sql;
     }
 

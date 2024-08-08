@@ -41,20 +41,20 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
 
         $this->_columns['civicrm_contract']['order_bys']['sort_name'] = [
             'title' => ts('Last Name, First Name'),
-            'default' => '0',
             'default_weight' => '2',
             'default_order' => 'ASC',
         ];
 
         $this->_columns['civicrm_contribution']['order_bys']['receive_date'] = [
             'title' => E::ts('Data operazione'),
-            'default' => '0',
             'default_weight' => '2',
             'default_order' => 'ASC',
         ];
 
         $this->MemberBookColumns();
     }
+
+
 
     public function from(): void
     {
@@ -131,5 +131,20 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             default:
                 return parent::whereClause($field, $op, $value, $min, $max);
         }
+    }
+
+    /**
+     * Build order by clause.
+     * The parent function is messy: this is a copy of CRM_Report_Form::orderBy
+     */
+    public function orderBy()
+    {
+        $this->_orderBy = "";
+        $this->_sections = [];
+        $this->storeOrderByArray();
+        if (!empty($this->_orderByArray) && !$this->_rollup == 'WITH ROLLUP') {
+            $this->_orderBy = "ORDER BY " . implode(', ', $this->_orderByArray);
+        }
+        $this->assign('sections', $this->_sections);
     }
 }
