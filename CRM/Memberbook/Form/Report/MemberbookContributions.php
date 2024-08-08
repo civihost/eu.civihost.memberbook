@@ -104,4 +104,18 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'civicrm_address_address_country_id',
         ]);
     }
+
+    public function whereClause(&$field, $op, $value, $min, $max)
+    {
+        switch ($field['name']) {
+            case 'active_in_year':
+                if ($value) {
+                    return "(YEAR({$this->_aliases['civicrm_contribution']}.receive_date) = {$value})";
+                }
+            case 'membership_type_id':
+                $this->can_execute_query = TRUE;
+            default:
+                return parent::whereClause($field, $op, $value, $min, $max);
+        }
+    }
 }

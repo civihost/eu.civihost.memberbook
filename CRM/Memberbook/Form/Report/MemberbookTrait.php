@@ -118,21 +118,6 @@ trait CRM_Memberbook_MemberbookTrait
         $this->_where .= " and memberbook_price_field_value.membership_type_id = {$this->_aliases['civicrm_membership']}.membership_type_id";
     }
 
-    public function whereClause(&$field, $op, $value, $min, $max)
-    {
-        switch ($field['name']) {
-            case 'active_in_year':
-                if ($value) {
-                    return "(YEAR({$this->_aliases['civicrm_membership']}.start_date) <= {$value} AND
-                        ({$this->_aliases['civicrm_membership']}.end_date IS NULL OR YEAR({$this->_aliases['civicrm_membership']}.end_date) >= {$value}))";
-                }
-            case 'membership_type_id':
-                $this->can_execute_query = TRUE;
-            default:
-                return parent::whereClause($field, $op, $value, $min, $max);
-        }
-    }
-
     public function alterDisplay(&$rows): void
     {
         parent::alterDisplay($rows);

@@ -40,4 +40,19 @@ class CRM_Memberbook_Form_Report_MemberbookMembers extends CRM_Report_Form_Membe
     {
         return $this->traitSortColumns();
     }
+
+    public function whereClause(&$field, $op, $value, $min, $max)
+    {
+        switch ($field['name']) {
+            case 'active_in_year':
+                if ($value) {
+                    return "(YEAR({$this->_aliases['civicrm_membership']}.start_date) <= {$value} AND
+                        ({$this->_aliases['civicrm_membership']}.end_date IS NULL OR YEAR({$this->_aliases['civicrm_membership']}.end_date) >= {$value}))";
+                }
+            case 'membership_type_id':
+                $this->can_execute_query = TRUE;
+            default:
+                return parent::whereClause($field, $op, $value, $min, $max);
+        }
+    }
 }
