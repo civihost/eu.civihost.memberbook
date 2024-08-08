@@ -39,6 +39,20 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'type' => CRM_Utils_Type::T_DATE,
         ];
 
+        $this->_columns['civicrm_contract']['order_bys']['sort_name'] = [
+            'title' => ts('Last Name, First Name'),
+            'default' => '0',
+            'default_weight' => '2',
+            'default_order' => 'ASC',
+        ];
+
+        $this->_columns['civicrm_contribution']['order_bys']['receive_date'] = [
+            'title' => E::ts('Data operazione'),
+            'default' => '0',
+            'default_weight' => '2',
+            'default_order' => 'ASC',
+        ];
+
         $this->MemberBookColumns();
     }
 
