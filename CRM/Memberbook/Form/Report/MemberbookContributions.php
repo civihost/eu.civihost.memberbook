@@ -15,12 +15,6 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
     {
         parent::__construct();
 
-        $this->_columns += $this->getAddressColumns([
-            // These options are only excluded because they were not previously present.
-            'order_by' => FALSE,
-            'group_by' => FALSE,
-        ]);
-
         $this->_columns['civicrm_contribution']['group_bys']['id'] = [
             'title' => ts('Contribution'),
             'default' => TRUE,
@@ -51,10 +45,12 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'default_order' => 'ASC',
         ];
 
+        // @todo See https://github.com/civicrm/civicrm-core/pull/30824
+        $this->_columns['civicrm_address']['fields']['state_province_id']['alter_display'] = 'alterStateProvinceID';
+        $this->_columns['civicrm_address']['fields']['country_id']['alter_display'] = 'alterCountryID';
+
         $this->MemberBookColumns();
     }
-
-
 
     public function from(): void
     {
@@ -90,13 +86,12 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             !empty($this->_params['fields']['batch_id']) ||
             !empty($this->_params['bid_value'])
         ) {
-            $this->_from .= "
-        LEFT JOIN civicrm_entity_financial_trxn eft
-          ON eft.entity_id = {$this->_aliases['civicrm_contribution']}.id AND
-            eft.entity_table = 'civicrm_contribution'
-        LEFT JOIN civicrm_entity_batch {$this->_aliases['civicrm_batch']}
-          ON ({$this->_aliases['civicrm_batch']}.entity_id = eft.financial_trxn_id
-          AND {$this->_aliases['civicrm_batch']}.entity_table = 'civicrm_financial_trxn')";
+            $this->_from .= " LEFT JOIN civicrm_entity_financial_trxn eft
+                ON eft.entity_id = {$this->_aliases['civicrm_contribution']}.id AND
+                    eft.entity_table = 'civicrm_contribution'
+                LEFT JOIN civicrm_entity_batch {$this->_aliases['civicrm_batch']}
+                ON ({$this->_aliases['civicrm_batch']}.entity_id = eft.financial_trxn_id
+                AND {$this->_aliases['civicrm_batch']}.entity_table = 'civicrm_financial_trxn')";
         }
 
         $this->joinAddressFromContact();
@@ -104,13 +99,16 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
         $this->joinEmailFromContact();
     }
 
-    public function tempTable($applyLimit = TRUE)
-    {
-    }
+    public function tempTable($applyLimit = TRUE) {}
 
     protected function sortColumns(): array
     {
         return array_merge($this->traitSortColumns(), [
+            'civicrm_address_street_address',
+            'civicrm_address_postal_code',
+            'civicrm_address_city',
+            'civicrm_address_state_province_id',
+            'civicrm_address_country_id',
             'civicrm_address_address_street_address',
             'civicrm_address_address_postal_code',
             'civicrm_address_address_city',
@@ -135,7 +133,7 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
 
     /**
      * Build order by clause.
-     * The parent function is messy: this is a copy of CRM_Report_Form::orderBy
+     * @todo The parent function is messy: this is a copy of CRM_Report_Form::orderBy
      */
     public function orderBy()
     {

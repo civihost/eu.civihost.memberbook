@@ -239,4 +239,19 @@ trait CRM_Memberbook_MemberbookTrait
         $this->_columnHeaders = array_merge(array_flip($sortArray), $this->_columnHeaders);
     }
 
+    /**
+     * Do AlterDisplay processing on Address Fields.
+     *  If there are multiple address field values then
+     *  on basis of provided separator the code values are translated into respective labels
+     *
+     * @param array $row
+     * @param array $rows
+     * @param int $rowNum
+     * @param string|null $baseUrl
+     * @param string|null $linkText
+     * @param string $separator
+     *
+     * @return bool
+     */
+    public function alterDisplayAddressFields(&$row, &$rows, &$rowNum, $baseUrl, $linkText, $separator = ',') {}
 }
