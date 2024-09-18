@@ -1,6 +1,6 @@
 <?php
 
-use CRM_Altreconomia_ExtensionUtil as E;
+use CRM_Memberbook_ExtensionUtil as E;
 
 require_once('MemberbookTrait.php');
 
@@ -13,8 +13,170 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
 
     public function __construct()
     {
-        parent::__construct();
+        $this->_columns = [
+            'civicrm_contact' => [
+                'dao' => 'CRM_Contact_DAO_Contact',
+                'fields' => $this->getBasicContactFields(),
+                'filters' => [
+                    'sort_name' => [
+                        'title' => ts('Donor Name'),
+                        'operator' => 'like',
+                    ],
+                    'id' => [
+                        'title' => ts('Contact ID'),
+                        'no_display' => TRUE,
+                    ],
+                ],
+                'grouping' => 'contact-fields',
+            ],
+            'civicrm_email' => [
+                'dao' => 'CRM_Core_DAO_Email',
+                'fields' => ['email' => NULL],
+                'grouping' => 'contact-fields',
+            ],
+            'civicrm_phone' => [
+                'dao' => 'CRM_Core_DAO_Phone',
+                'fields' => ['phone' => NULL],
+                'grouping' => 'contact-fields',
+            ],
+            'civicrm_contribution' => [
+                'dao' => 'CRM_Contribute_DAO_Contribution',
+                'fields' => [
+                    'contribution_id' => [
+                        'name' => 'id',
+                        'no_display' => TRUE,
+                        'required' => TRUE,
+                    ],
+                    'financial_type_id' => ['title' => ts('Financial Type')],
+                    'contribution_status_id' => ['title' => ts('Contribution Status')],
+                    'payment_instrument_id' => ['title' => ts('Payment Type')],
+                    'currency' => [
+                        'required' => TRUE,
+                        'no_display' => TRUE,
+                    ],
+                    'trxn_id' => NULL,
+                    'receive_date' => ['type' => CRM_Utils_Type::T_DATE,],
+                    'receipt_date' => ['type' => CRM_Utils_Type::T_DATE,],
+                    'fee_amount' => NULL,
+                    'net_amount' => NULL,
+                    'total_amount' => NULL,
+                ],
+                'filters' => [
+                    'receive_date' => ['operatorType' => CRM_Report_Form::OP_DATE],
+                    'financial_type_id' => [
+                        'title' => ts('Financial Type'),
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Contribute_BAO_Contribution::buildOptions('financial_type_id', 'search'),
+                        'type' => CRM_Utils_Type::T_INT,
+                    ],
+                    'payment_instrument_id' => [
+                        'title' => ts('Payment Type'),
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Contribute_BAO_Contribution::buildOptions('payment_instrument_id', 'search'),
+                        'type' => CRM_Utils_Type::T_INT,
+                    ],
+                    'currency' => [
+                        'title' => ts('Currency'),
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Core_OptionGroup::values('currencies_enabled'),
+                        'default' => NULL,
+                        'type' => CRM_Utils_Type::T_STRING,
+                    ],
+                    'contribution_status_id' => [
+                        'title' => ts('Contribution Status'),
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'search'),
+                        'type' => CRM_Utils_Type::T_INT,
+                    ],
+                    'total_amount' => ['title' => ts('Contribution Amount')],
+                ],
+                'order_bys' => [
+                    'receive_date' => [
+                        'title' => ts('Contribution Date'),
+                        'default_weight' => '2',
+                        'default_order' => 'DESC',
+                    ],
+                ],
+                'grouping' => 'contri-fields',
+            ],
+            'civicrm_membership' => [
+                'dao' => 'CRM_Member_DAO_Membership',
+                'fields' => [
+                    'membership_type_id' => [
+                        'title' => ts('Membership Type'),
+                        'required' => TRUE,
+                        'no_repeat' => TRUE,
+                    ],
+                    'membership_start_date' => [
+                        'title' => ts('Membership Start Date'),
+                        'default' => TRUE,
+                    ],
+                    'membership_end_date' => [
+                        'title' => ts('Membership Expiration Date'),
+                        'default' => TRUE,
+                    ],
+                    'join_date' => [
+                        'title' => ts('Member Since'),
+                        'default' => TRUE,
+                    ],
+                    'source' => ['title' => ts('Membership Source')],
+                ],
+                'filters' => [
+                    'membership_join_date' => ['operatorType' => CRM_Report_Form::OP_DATE],
+                    'membership_start_date' => ['operatorType' => CRM_Report_Form::OP_DATE],
+                    'membership_end_date' => ['operatorType' => CRM_Report_Form::OP_DATE],
+                    'owner_membership_id' => [
+                        'title' => ts('Primary Membership'),
+                        'operatorType' => CRM_Report_Form::OP_INT,
+                    ],
+                    'tid' => [
+                        'name' => 'membership_type_id',
+                        'title' => ts('Membership Types'),
+                        'type' => CRM_Utils_Type::T_INT,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Member_PseudoConstant::membershipType(),
+                    ],
+                ],
+                'grouping' => 'member-fields',
+            ],
+            'civicrm_membership_status' => [
+                'dao' => 'CRM_Member_DAO_MembershipStatus',
+                'alias' => 'mem_status',
 
+                'fields' => [
+                    'membership_status_name' => [
+                        'name' => 'name',
+                        'title' => ts('Membership Status'),
+                        'default' => TRUE,
+                    ],
+                ],
+                'filters' => [
+                    'sid' => [
+                        'name' => 'id',
+                        'title' => ts('Membership Status'),
+                        'type' => CRM_Utils_Type::T_INT,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Member_PseudoConstant::membershipStatus(NULL, NULL, 'label'),
+                    ],
+                ],
+                'grouping' => 'member-fields',
+            ],
+        ] + $this->getAddressColumns([
+            // These options are only excluded because they were not previously present.
+            'order_by' => FALSE,
+            'group_by' => FALSE,
+        ]);
+
+        $this->_groupFilter = TRUE;
+        $this->_tagFilter = TRUE;
+
+        // If we have campaigns enabled, add those elements to both the fields, filters and sorting
+        $this->addCampaignFields('civicrm_contribution', FALSE, TRUE);
+
+        $this->_currencyColumn = 'civicrm_contribution_currency';
+
+        CRM_Report_Form::__construct();
+/*
         $this->_columns['civicrm_contribution']['group_bys']['id'] = [
             'title' => ts('Contribution'),
             'default' => TRUE,
@@ -32,8 +194,8 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'title' => E::ts('Data operazione'),
             'type' => CRM_Utils_Type::T_DATE,
         ];
-
-        $this->_columns['civicrm_contract']['order_bys']['sort_name'] = [
+*/
+        $this->_columns['civicrm_contact']['order_bys']['sort_name'] = [
             'title' => ts('Last Name, First Name'),
             'default_weight' => '2',
             'default_order' => 'ASC',
@@ -44,10 +206,6 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'default_weight' => '2',
             'default_order' => 'ASC',
         ];
-
-        // @todo See https://github.com/civicrm/civicrm-core/pull/30824
-        $this->_columns['civicrm_address']['fields']['state_province_id']['alter_display'] = 'alterStateProvinceID';
-        $this->_columns['civicrm_address']['fields']['country_id']['alter_display'] = 'alterCountryID';
 
         $this->MemberBookColumns();
     }
@@ -65,8 +223,13 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
                           ON {$this->_aliases['civicrm_membership_status']}.id =
                              {$this->_aliases['civicrm_membership']}.status_id";
 
-        $this->_from .= " LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.contribution_id = {$this->_aliases['civicrm_contribution']}.id
-            LEFT JOIN civicrm_price_field_value as memberbook_price_field_value on memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
+        $this->_from .= " LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.entity_id = {$this->_aliases['civicrm_membership']}.id and memberbook_line_item.entity_table = 'civicrm_membership'";
+
+        if (\Civi::settings()->get('memberbook_consider_one_year')) {
+            $this->_from .= " and memberbook_line_item.contribution_id = {$this->_aliases['civicrm_contribution']}.id";
+        }
+
+        $this->_from .= " LEFT JOIN civicrm_price_field_value as memberbook_price_field_value on memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
             LEFT JOIN civicrm_price_field as memberbook_price_field on memberbook_price_field.id = memberbook_line_item.price_field_id
             ";
 

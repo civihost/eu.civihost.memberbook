@@ -1,10 +1,13 @@
 <?php
 
-use CRM_Altreconomia_ExtensionUtil as E;
+use CRM_Memberbook_ExtensionUtil as E;
 
 trait CRM_Memberbook_MemberbookTrait
 {
     protected $can_execute_query = FALSE;
+    protected ?array $code_customfield;
+    protected ?array $ssn_customfield;
+    protected ?array $vat_customfield;
 
     public function buildQuery($applyLimit = TRUE)
     {
@@ -16,35 +19,43 @@ trait CRM_Memberbook_MemberbookTrait
             CRM_Core_Session::setStatus($message, $title, $type = 'error', $options = array('expires' => 0));
         }
         $sql = str_replace("(SELECT SQL_CALC_FOUND_ROWS", "(SELECT", $sql);
-        Civi::log()->debug($sql);
         return $sql;
     }
 
     protected function MemberBookColumns()
     {
+        $this->code_customfield = CRM_Memberbook_Utils::getSettingCustomField('memberbook_code_customfield');
+        $this->ssn_customfield = CRM_Memberbook_Utils::getSettingCustomField('memberbook_ssn_customfield');
+        $this->vat_customfield = CRM_Memberbook_Utils::getSettingCustomField('memberbook_vat_customfield');
+
+        $total_subscribed_label = \Civi::settings()->get('memberbook_total_subscribed_label') ?? E::ts('Total subscribed');
+        $total_paid_label = \Civi::settings()->get('memberbook_total_paid_label') ?? E::ts('Total paid');
+        $member_code_label = \Civi::settings()->get('memberbook_code_label') ?? E::ts('Member code');
+        $shares_label = \Civi::settings()->get('memberbook_shares_label') ?? E::ts('Number of shares');
+
         // Custom columns
         $this->_columns['civicrm_membership']['fields']['sum_qty'] = [
-            'title' => E::ts('Quote'),
+            'title' => $shares_label,
             'dbAlias' => 'FLOOR(memberbook_line_item.qty)',
             'type' => CRM_Utils_Type::T_INT,
-            'required' => TRUE,
+            'required' => FALSE,
             'default' => TRUE,
-            'statistics' => ['sum' => E::ts('Quote')],
+            'statistics' => ['sum' => $shares_label],
             'is_statistics' => TRUE,
         ];
 
         $this->_columns['civicrm_membership']['fields']['sum_line_total'] = [
-            'title' => E::ts('Capitale sottoscritto'),
+            'title' => $total_subscribed_label,
             'dbAlias' => 'memberbook_line_item.line_total',
             'type' => CRM_Utils_Type::T_MONEY,
-            'required' => TRUE,
+            'required' => FALSE,
             'default' => TRUE,
-            'statistics' => ['sum' => E::ts('Capitale sottoscritto')],
+            'statistics' => ['sum' => $total_subscribed_label],
             'is_statistics' => TRUE,
         ];
 
         $this->_columns['civicrm_membership']['fields']['sum_financial_item'] = [
-            'title' => E::ts('Capitale versato'),
+            'title' => $total_paid_label,
             'dbAlias' => "
                     (select sum(ft.total_amount) from civicrm_entity_financial_trxn as eft
                         left outer join civicrm_financial_trxn as ft on ft.id = eft.financial_trxn_id
@@ -63,9 +74,9 @@ trait CRM_Memberbook_MemberbookTrait
                     )
                 ",
             'type' => CRM_Utils_Type::T_MONEY,
-            'required' => TRUE,
+            'required' => FALSE,
             'default' => TRUE,
-            'statistics' => ['sum' => E::ts('Capitale versato')],
+            'statistics' => ['sum' => $total_paid_label],
             'is_statistics' => TRUE,
         ];
 
@@ -77,13 +88,20 @@ trait CRM_Memberbook_MemberbookTrait
             'is_statistics' => TRUE,
         ];
 
+        // Change some column titles according to settings
+        if (\Civi::settings()->get('memberbook_receipt_date_label')) {
+            $this->_columns['civicrm_contribution']['fields']['receipt_date']['title'] = \Civi::settings()->get('memberbook_receipt_date_label');
+        }
+
         // Order by
-        $this->_columns['civicrm_value_dati_gestiona_6']['order_bys']['codice_socio_11'] = [
-            'title' => E::ts('Codice socio'),
-            'default' => '1',
-            'default_weight' => '2',
-            'default_order' => 'ASC',
-        ];
+        if ($this->code_customfield) {
+            $this->_columns[$this->code_customfield['table_name']]['order_bys'][$this->code_customfield['column_name']] = [
+                'title' => $member_code_label,
+                'default' => '1',
+                'default_weight' => '2',
+                'default_order' => 'ASC',
+            ];
+        }
 
         // Custom filters
         $this->_columns['civicrm_membership']['filters']['active_in_year'] = [
@@ -214,14 +232,24 @@ trait CRM_Memberbook_MemberbookTrait
 
     protected function traitSortColumns(): array
     {
-        return [
+        $orderby = [
             'civicrm_membership_row_number_count',
-            'civicrm_value_dati_gestiona_6_custom_11', // codice socio
-            'civicrm_contact_sort_name',
-            'civicrm_contact_birth_date',
-            'civicrm_value_altri_dati_an_4_custom_7',
-            'civicrm_value_dati_fiscali_5_custom_8',
         ];
+
+        if ($this->code_customfield) {
+            $orderby[] = $this->code_customfield['table_name'] . '_custom_' . $this->code_customfield['id'];
+        }
+
+        $orderby[] = 'civicrm_contact_sort_name';
+        $orderby[] = 'civicrm_contact_birth_date';
+
+        if ($this->ssn_customfield) {
+            $orderby[] = $this->ssn_customfield['table_name'] . '_custom_' . $this->ssn_customfield['id'];
+        }
+        if ($this->vat_customfield) {
+            $orderby[] = $this->vat_customfield['table_name'] . '_custom_' . $this->vat_customfield['id'];
+        }
+        return $orderby;
     }
 
     /**
