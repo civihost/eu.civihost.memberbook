@@ -15,16 +15,20 @@ class CRM_Memberbook_Utils
 
         if (!empty($customGroups)) {
             $customFields = \Civi\Api4\CustomField::get(TRUE)
-                ->addSelect('id', 'label', 'column_name', 'custom_group_id')
+                ->addSelect('id', 'label', 'column_name', 'custom_group_id', 'name')
                 ->addWhere('custom_group_id', 'IN', array_keys($customGroups))
                 ->addWhere('is_active', '=', TRUE)
                 ->execute();
             foreach ($customFields as $customField) {
                 $customGroup = $customGroups[$customField['custom_group_id']];
-                $options[$customField['id'] . '|' .
+                $options[
+                    $customField['id'] . '|' .
                     $customGroup['extends'] . '|' .
                     $customGroup['table_name'] . '|' .
-                    $customField['column_name']] = $customGroup['title'] . ' (' . $customGroup['extends'] . ') - ' . $customField['label'];
+                    $customField['column_name'] . '|' .
+                    $customGroup['name'] . '|' .
+                    $customField['name']
+                ] = $customGroup['title'] . ' (' . $customGroup['extends'] . ') - ' . $customField['label'];
                 //$options[$customGroup['id']] = $customGroup['title'] . ' (' . $customGroup['extends'] . ') - ' . $customField['label'];
             }
         }
@@ -41,7 +45,7 @@ class CRM_Memberbook_Utils
     {
         $groups = [];
         $customGroups = \Civi\Api4\CustomGroup::get(FALSE)
-            ->addSelect('id', 'table_name', 'extends', 'title')
+            ->addSelect('id', 'table_name', 'extends', 'title', 'name')
             ->addWhere('extends', 'IN', $extends)
             ->addWhere('is_active', '=', TRUE)
             ->execute();
@@ -65,6 +69,8 @@ class CRM_Memberbook_Utils
                 'extends' => $a[1],
                 'table_name' => $a[2],
                 'column_name' => $a[3],
+                'group_name' => $a[4],
+                'name' => $a[5],
             ];
         }
         return $value;
