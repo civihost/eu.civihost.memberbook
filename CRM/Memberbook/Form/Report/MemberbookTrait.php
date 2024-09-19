@@ -31,16 +31,52 @@ trait CRM_Memberbook_MemberbookTrait
         $total_subscribed_label = \Civi::settings()->get('memberbook_total_subscribed_label') ?? E::ts('Total subscribed');
         $total_paid_label = \Civi::settings()->get('memberbook_total_paid_label') ?? E::ts('Total paid');
         $member_code_label = \Civi::settings()->get('memberbook_code_label') ?? E::ts('Member code');
-        $shares_label = \Civi::settings()->get('memberbook_shares_label') ?? E::ts('Number of shares');
+        $total_shares_label = \Civi::settings()->get('memberbook_total_shares_label') ?? E::ts('Total number of shares');
 
         // Custom columns
+        if ($this->ssn_customfield && $this->vat_customfield) {
+            $customField = \Civi\Api4\CustomField::get(TRUE)
+                ->addSelect("GROUP_CONCAT(label SEPARATOR ' - ')")
+                ->addWhere('id', 'IN', [$this->ssn_customfield['id'], $this->vat_customfield['id']])
+                ->execute()
+                ->first();
+            // add a single column for the 2 fields
+            $ssn_alias = str_replace('civicrm_', '', $this->vat_customfield['table_name']) . "_civireport.{$this->vat_customfield['column_name']}";
+            $vat_alias = str_replace('civicrm_', '', $this->ssn_customfield['table_name']) . "_civireport.{$this->ssn_customfield['column_name']}";
+
+            $this->_columns['civicrm_contact']['fields']['ssn_vat'] = [
+                'title' => $customField['GROUP_CONCAT:label'],
+                'dbAlias' => "IF({$ssn_alias} IS NULL, {$vat_alias}, IF({$vat_alias} IS NULL, {$ssn_alias}, CONCAT({$ssn_alias}, ' - ', {$vat_alias})))",
+                'type' => CRM_Utils_Type::T_STRING,
+                'required' => FALSE,
+                'default' => FALSE,
+            ];
+
+            if (!isset($this->_columns[$this->vat_customfield['table_name']])) {
+                $this->_columns[$this->vat_customfield['table_name']] = [
+                    'dao' => 'CRM_Contact_DAO_Contact',
+                    'extends' => 'Individual',
+                    'grouping' => $this->vat_customfield['table_name'],
+                ];
+            }
+
+            if (!isset($this->_columns[$this->ssn_customfield['table_name']])) {
+                exit();
+                $this->_columns[$this->ssn_customfield['table_name']] = [
+                    'dao' => 'CRM_Contact_DAO_Contact',
+                    'extends' => 'Individual',
+                    'grouping' => $this->ssn_customfield['table_name'],
+                ];
+            }
+        }
+
         $this->_columns['civicrm_membership']['fields']['sum_qty'] = [
-            'title' => $shares_label,
+            'title' => $total_shares_label,
             'dbAlias' => 'FLOOR(memberbook_line_item.qty)',
             'type' => CRM_Utils_Type::T_INT,
             'required' => FALSE,
             'default' => TRUE,
-            'statistics' => ['sum' => $shares_label],
+            'statistics' => ['sum' => $total_shares_label],
             'is_statistics' => TRUE,
         ];
 
@@ -124,6 +160,18 @@ trait CRM_Memberbook_MemberbookTrait
     {
         parent::select();
         $this->_select = str_replace("COUNT({$this->_aliases['civicrm_membership']}.row_number) as", "null as ", $this->_select);
+    }
+
+    public function traitFrom(): void
+    {
+        if ($this->ssn_customfield && !isset($this->_params['fields']['custom_' . $this->ssn_customfield['id']])) {
+            $tableAlias = str_replace('civicrm_', '', $this->ssn_customfield['table_name']) . '_civireport';
+            $this->_from .= " LEFT JOIN {$this->ssn_customfield['table_name']} as {$tableAlias} on {$tableAlias}.entity_id = {$this->_aliases['civicrm_contact']}.id";
+        }
+        if ($this->vat_customfield && !isset($this->_params['fields']['custom_' . $this->vat_customfield['id']])) {
+            $tableAlias = str_replace('civicrm_', '', $this->vat_customfield['table_name']) . '_civireport';
+            $this->_from .= " LEFT JOIN {$this->vat_customfield['table_name']} as {$tableAlias} on {$tableAlias}.entity_id = {$this->_aliases['civicrm_contact']}.id";
+        }
     }
 
     /**
@@ -248,6 +296,9 @@ trait CRM_Memberbook_MemberbookTrait
         }
         if ($this->vat_customfield) {
             $orderby[] = $this->vat_customfield['table_name'] . '_custom_' . $this->vat_customfield['id'];
+        }
+        if ($this->ssn_customfield && $this->vat_customfield) {
+            $orderby[] = 'civicrm_contact_ssn_vat';
         }
         return $orderby;
     }

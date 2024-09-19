@@ -29,17 +29,14 @@ class CRM_Memberbook_Form_Report_MemberbookMembers extends CRM_Report_Form_Membe
     {
         parent::from();
 
+        $this->traitFrom();
+
         $this->_from .= " LEFT JOIN civicrm_membership_payment as memberbook_payment on {$this->_aliases['civicrm_membership']}.id = memberbook_payment.membership_id
             LEFT JOIN civicrm_contribution as memberbook_contribution on memberbook_payment.contribution_id = memberbook_contribution.id
             LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.contribution_id = memberbook_contribution.id
             LEFT JOIN civicrm_price_field_value as memberbook_price_field_value on memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
             LEFT JOIN civicrm_price_field as memberbook_price_field on memberbook_price_field.id = memberbook_line_item.price_field_id
             ";
-        //$this->_from .= " LEFT JOIN civicrm_contribution as memberbook_contribution on {$this->_aliases['civicrm_membership']}.contact_id = memberbook_contribution.contact_id
-        //    LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.contribution_id = memberbook_contribution.id
-        //    LEFT JOIN civicrm_price_field_value as memberbook_price_field_value on memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
-        //    LEFT JOIN civicrm_price_field as memberbook_price_field on memberbook_price_field.id = memberbook_line_item.price_field_id
-        //    ";
     }
 
     protected function sortColumns(): array

@@ -23,7 +23,7 @@ return [
         'title' => E::ts('Member code custom field'),
         'description' => E::ts(
             'The member code is mandatory for Italian Member Book and usually is a custom field added to Membership or Contribution entity. ' .
-            'If you choose the flag "Considers only contributions for one year" the member code should be added to Contribution entity and ' .
+            'If you choose the flag "Consider only contributions for one year" the member code should be added to Contribution entity and ' .
             'will be automatically updated by the job according to the receipt date of contribution.'
         ),
         'html_attributes' => [],
@@ -95,7 +95,7 @@ return [
         'type' => 'Boolean',
         'default' => 0,
         'html_type' => 'checkbox',
-        'title' => E::ts('Consider only contributions for one year for totals columns in the report'),
+        'title' => E::ts('Consider only contributions for one year for membership total columns in the report'),
         'description' => E::ts('This option is useful for italian Associations because the Member Book must only refer to one year\'s membership contributions. In this case, we suggest adding the member code custom field in the Contribution entity.'),
         'is_domain' => 1,
         'is_contact' => 0,
@@ -105,19 +105,35 @@ return [
             ]
         ],
     ],
-    'memberbook_shares_label' => [
-        'name' => 'memberbook_shares_label',
+    'memberbook_total_shares_label' => [
+        'name' => 'memberbook_total_shares_label',
         'type' => 'String',
         'html_type' => 'text',
-        'default' => 'Numero quote',
+        'default' => 'Totale quote',
         'required' => TRUE,
         'is_domain' => 1,
         'is_contact' => 0,
-        'title' => E::ts('Number of shares label'),
+        'title' => E::ts('Label for the total number of shares'),
         'html_attributes' => [],
         'settings_pages' => [
             'memberbook' => [
                 'weight' => 45,
+            ]
+        ],
+    ],
+    'memberbook_qty_lineitem_label' => [
+        'name' => 'memberbook_qty_lineitem_label',
+        'type' => 'String',
+        'html_type' => 'text',
+        'default' => 'Numero di quote',
+        'required' => TRUE,
+        'is_domain' => 1,
+        'is_contact' => 0,
+        'title' => E::ts('Label for the number of shares in a contribution'),
+        'html_attributes' => [],
+        'settings_pages' => [
+            'memberbook' => [
+                'weight' => 50,
             ]
         ],
     ],
@@ -129,11 +145,11 @@ return [
         'required' => TRUE,
         'is_domain' => 1,
         'is_contact' => 0,
-        'title' => E::ts('Total subscribed label'),
+        'title' => E::ts('Label for total amount subscribed for a membership'),
         'html_attributes' => [],
         'settings_pages' => [
             'memberbook' => [
-                'weight' => 50,
+                'weight' => 55,
             ]
         ],
     ],
@@ -145,11 +161,27 @@ return [
         'required' => TRUE,
         'is_domain' => 1,
         'is_contact' => 0,
-        'title' => E::ts('Total paid label'),
+        'title' => E::ts('Label for total amount paid for a membership'),
         'html_attributes' => [],
         'settings_pages' => [
             'memberbook' => [
                 'weight' => 60,
+            ]
+        ],
+    ],
+    'memberbook_total_lineitem_label' => [
+        'name' => 'memberbook_total_lineitem_label',
+        'type' => 'String',
+        'html_type' => 'text',
+        'default' => 'Totale movimento',
+        'required' => TRUE,
+        'is_domain' => 1,
+        'is_contact' => 0,
+        'title' => E::ts('Label for amount of line item contribution'),
+        'html_attributes' => [],
+        'settings_pages' => [
+            'memberbook' => [
+                'weight' => 65,
             ]
         ],
     ],
@@ -161,7 +193,7 @@ return [
         'is_domain' => 1,
         'is_contact' => 0,
         'title' => E::ts('Receipt date label'),
-        'description' => E::ts('If you choose the flag "Considers only contributions for one year" you can change the label of Receipt Date in the report'),
+        'description' => E::ts('If you choose the flag "Consider only contributions for one year" you can change the label of Receipt Date in the report because it is used as admission date.'),
         'html_attributes' => [],
         'settings_pages' => [
             'memberbook' => [

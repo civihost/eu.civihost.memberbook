@@ -13,6 +13,10 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
 
     public function __construct()
     {
+        $receipt_date_label = \Civi::settings()->get('memberbook_receipt_date_label') ?? ts('Receipt Date');
+        $contribution_shares_label = \Civi::settings()->get('memberbook_qty_lineitem_label') ?? E::ts('Number of shares');
+        $total_lineitem_label = \Civi::settings()->get('memberbook_total_lineitem_label') ?? E::ts('Total subscribed');
+
         $this->_columns = [
             'civicrm_contact' => [
                 'dao' => 'CRM_Contact_DAO_Contact',
@@ -25,6 +29,13 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
                     'id' => [
                         'title' => ts('Contact ID'),
                         'no_display' => TRUE,
+                    ],
+                ],
+                'order_bys' => [
+                    'sort_name' => [
+                        'title' => ts('Last Name, First Name'),
+                        'default_weight' => '3',
+                        'default_order' => 'ASC',
                     ],
                 ],
                 'grouping' => 'contact-fields',
@@ -60,6 +71,24 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
                     'fee_amount' => NULL,
                     'net_amount' => NULL,
                     'total_amount' => NULL,
+                    'sum_memberbook_line_qty' => [
+                        'title' => $contribution_shares_label,
+                        'dbAlias' => "IF(memberbook_line_item.contribution_id = contribution_civireport.id, FLOOR(memberbook_line_item.qty), 0)",
+                        'type' => CRM_Utils_Type::T_INT,
+                        'required' => FALSE,
+                        'default' => TRUE,
+                        'statistics' => ['sum' => $contribution_shares_label],
+                        'is_statistics' => TRUE,
+                    ],
+                    'sum_memberbook_line_total' => [
+                        'title' => $total_lineitem_label,
+                        'dbAlias' => "IF(memberbook_line_item.contribution_id = contribution_civireport.id, memberbook_line_item.line_total, 0)",
+                        'type' => CRM_Utils_Type::T_MONEY,
+                        'required' => FALSE,
+                        'default' => TRUE,
+                        'statistics' => ['sum' => $total_lineitem_label],
+                        'is_statistics' => TRUE,
+                    ],
                 ],
                 'filters' => [
                     'receive_date' => ['operatorType' => CRM_Report_Form::OP_DATE],
@@ -91,10 +120,15 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
                     'total_amount' => ['title' => ts('Contribution Amount')],
                 ],
                 'order_bys' => [
+                    'receipt_date' => [
+                        'title' => $receipt_date_label,
+                        'default_weight' => '1',
+                        'default_order' => 'ASC',
+                    ],
                     'receive_date' => [
                         'title' => ts('Contribution Date'),
                         'default_weight' => '2',
-                        'default_order' => 'DESC',
+                        'default_order' => 'ASC',
                     ],
                 ],
                 'grouping' => 'contri-fields',
@@ -176,37 +210,6 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
         $this->_currencyColumn = 'civicrm_contribution_currency';
 
         CRM_Report_Form::__construct();
-/*
-        $this->_columns['civicrm_contribution']['group_bys']['id'] = [
-            'title' => ts('Contribution'),
-            'default' => TRUE,
-        ];
-
-        $this->_columns['civicrm_contact']['fields']['birth_date'] = [
-            'title' => ts('Birth Date'),
-        ];
-
-        $this->_columns['civicrm_contact']['fields']['sort_name'] = [
-            'title' => ts('Contact Name')
-        ];
-
-        $this->_columns['civicrm_contribution']['fields']['receive_date'] = [
-            'title' => E::ts('Data operazione'),
-            'type' => CRM_Utils_Type::T_DATE,
-        ];
-*/
-        $this->_columns['civicrm_contact']['order_bys']['sort_name'] = [
-            'title' => ts('Last Name, First Name'),
-            'default_weight' => '2',
-            'default_order' => 'ASC',
-        ];
-
-        $this->_columns['civicrm_contribution']['order_bys']['receive_date'] = [
-            'title' => E::ts('Data operazione'),
-            'default_weight' => '2',
-            'default_order' => 'ASC',
-        ];
-
         $this->MemberBookColumns();
     }
 
@@ -222,6 +225,8 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
               LEFT JOIN civicrm_membership_status {$this->_aliases['civicrm_membership_status']}
                           ON {$this->_aliases['civicrm_membership_status']}.id =
                              {$this->_aliases['civicrm_membership']}.status_id";
+
+        $this->traitFrom();
 
         $this->_from .= " LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.entity_id = {$this->_aliases['civicrm_membership']}.id and memberbook_line_item.entity_table = 'civicrm_membership'";
 
@@ -277,6 +282,10 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             'civicrm_address_address_city',
             'civicrm_address_address_state_province_id',
             'civicrm_address_address_country_id',
+            'civicrm_contribution_receive_date',
+            'civicrm_membership_membership_type_id',
+            'civicrm_membership_membership_start_date',
+            'civicrm_membership_membership_end_date',
         ]);
     }
 
@@ -307,5 +316,13 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
             $this->_orderBy = "ORDER BY " . implode(', ', $this->_orderByArray);
         }
         $this->assign('sections', $this->_sections);
+    }
+
+    /**
+     * Defines grouping clause of the report SQL query
+     */
+    public function groupBy()
+    {
+        $this->_groupBy = "GROUP BY {$this->_aliases['civicrm_contribution']}.id";
     }
 }
