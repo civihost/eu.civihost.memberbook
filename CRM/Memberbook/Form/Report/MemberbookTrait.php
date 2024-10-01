@@ -164,11 +164,17 @@ trait CRM_Memberbook_MemberbookTrait
 
     public function traitFrom(): void
     {
+        $addJoin = false;
         if ($this->ssn_customfield && !isset($this->_params['fields']['custom_' . $this->ssn_customfield['id']])) {
             $tableAlias = str_replace('civicrm_', '', $this->ssn_customfield['table_name']) . '_civireport';
             $this->_from .= " LEFT JOIN {$this->ssn_customfield['table_name']} as {$tableAlias} on {$tableAlias}.entity_id = {$this->_aliases['civicrm_contact']}.id";
+            $addJoin = true;
         }
-        if ($this->vat_customfield && !isset($this->_params['fields']['custom_' . $this->vat_customfield['id']])) {
+        if (
+            $this->vat_customfield &&
+            !isset($this->_params['fields']['custom_' . $this->vat_customfield['id']]) &&
+            (!$addJoin || $this->vat_customfield['table_name'] != $this->ssn_customfield['table_name'])
+        ) {
             $tableAlias = str_replace('civicrm_', '', $this->vat_customfield['table_name']) . '_civireport';
             $this->_from .= " LEFT JOIN {$this->vat_customfield['table_name']} as {$tableAlias} on {$tableAlias}.entity_id = {$this->_aliases['civicrm_contact']}.id";
         }

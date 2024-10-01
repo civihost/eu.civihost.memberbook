@@ -23,11 +23,15 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
                 'fields' => $this->getBasicContactFields(),
                 'filters' => [
                     'sort_name' => [
-                        'title' => ts('Donor Name'),
+                        'title' => ts('Contact Name'),
                         'operator' => 'like',
                     ],
+                    'is_deleted' => [
+                        'title' => ts('Is Deleted'),
+                        'default' => 0,
+                        'type' => CRM_Utils_Type::T_BOOLEAN,
+                    ],
                     'id' => [
-                        'title' => ts('Contact ID'),
                         'no_display' => TRUE,
                     ],
                 ],
