@@ -46,7 +46,7 @@ trait CRM_Memberbook_MemberbookTrait
 
             $this->_columns['civicrm_contact']['fields']['ssn_vat'] = [
                 'title' => $customField['GROUP_CONCAT:label'],
-                'dbAlias' => "IF({$ssn_alias} IS NULL, {$vat_alias}, IF({$vat_alias} IS NULL, {$ssn_alias}, CONCAT({$ssn_alias}, ' - ', {$vat_alias})))",
+                'dbAlias' => "IF({$ssn_alias} IS NULL OR {$ssn_alias} = '', {$vat_alias}, IF({$vat_alias} IS NULL OR {$vat_alias} = '', {$ssn_alias}, CONCAT({$ssn_alias}, ' - ', {$vat_alias})))",
                 'type' => CRM_Utils_Type::T_STRING,
                 'required' => FALSE,
                 'default' => FALSE,

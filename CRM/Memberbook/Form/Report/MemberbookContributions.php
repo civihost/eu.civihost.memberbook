@@ -225,7 +225,7 @@ class CRM_Memberbook_Form_Report_MemberbookContributions extends CRM_Report_Form
               INNER JOIN civicrm_contact {$this->_aliases['civicrm_contact']}
                       ON ({$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id)
               LEFT JOIN civicrm_membership {$this->_aliases['civicrm_membership']}
-                      ON ({$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_membership']}.contact_id)
+                      ON ({$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_membership']}.contact_id) AND {$this->_aliases['civicrm_membership']}.is_test = 0
               LEFT JOIN civicrm_membership_status {$this->_aliases['civicrm_membership_status']}
                           ON {$this->_aliases['civicrm_membership_status']}.id =
                              {$this->_aliases['civicrm_membership']}.status_id";

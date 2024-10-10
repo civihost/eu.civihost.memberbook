@@ -49,11 +49,11 @@ function civicrm_api3_job_assign_member_code($params)
     $lineItems = \Civi\Api4\LineItem::get(TRUE)
         ->addSelect('contribution_id', 'contribution.receipt_date', 'contribution.receive_date')
         ->addJoin('Contribution AS contribution', 'LEFT', ['contribution_id', '=', 'contribution.id'])
+        ->addWhere('contribution.is_test', '=', 0)
         ->addWhere('entity_table', '=', 'civicrm_membership')
         ->addWhere('YEAR(contribution.receipt_date)', '=', $year)
         ->addWhere('contribution.contribution_status_id', '=', 1)
         ->addWhere('contribution.receipt_date', 'IS NOT NULL')
-        ->setLimit(25)
         ->addGroupBy('contribution_id')
         ->execute();
 
