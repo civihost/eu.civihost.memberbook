@@ -27,16 +27,41 @@ class CRM_Memberbook_Form_Report_MemberbookMembers extends CRM_Report_Form_Membe
 
     public function from(): void
     {
-        parent::from();
+        $this->setFromBase('civicrm_contact');
+        $this->_from .= "
+         {$this->_aclFrom}
+               INNER JOIN civicrm_membership {$this->_aliases['civicrm_membership']}
+                          ON {$this->_aliases['civicrm_contact']}.id =
+                             {$this->_aliases['civicrm_membership']}.contact_id AND {$this->_aliases['civicrm_membership']}.is_test = 0
+               LEFT  JOIN civicrm_membership_status {$this->_aliases['civicrm_membership_status']}
+                          ON {$this->_aliases['civicrm_membership_status']}.id =
+                             {$this->_aliases['civicrm_membership']}.status_id ";
+
+        $this->joinAddressFromContact();
+        $this->joinPhoneFromContact();
+        $this->joinEmailFromContact();
+
+        if ($this->isTableSelected('civicrm_contribution')) {
+            $this->_from .= "
+            LEFT JOIN civicrm_membership_payment cmp
+                ON {$this->_aliases['civicrm_membership']}.id = cmp.membership_id
+            LEFT JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
+                 ON cmp.contribution_id={$this->_aliases['civicrm_contribution']}.id
+            LEFT JOIN civicrm_line_item as memberbook_line_item
+                ON memberbook_line_item.contribution_id = {$this->_aliases['civicrm_contribution']}.id
+            LEFT JOIN civicrm_price_field_value as memberbook_price_field_value
+                ON memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
+            LEFT JOIN civicrm_price_field as memberbook_price_field
+                ON memberbook_price_field.id = memberbook_line_item.price_field_id\n";
+        }
+        if ($this->isTableSelected('civicrm_contribution_recur')) {
+            $this->_from .= <<<HERESQL
+            LEFT JOIN civicrm_contribution_recur {$this->_aliases['civicrm_contribution_recur']}
+                ON {$this->_aliases['civicrm_membership']}.contribution_recur_id = {$this->_aliases['civicrm_contribution_recur']}.id
+HERESQL;
+        }
 
         $this->traitFrom();
-
-        $this->_from .= " LEFT JOIN civicrm_membership_payment as memberbook_payment on {$this->_aliases['civicrm_membership']}.id = memberbook_payment.membership_id
-            LEFT JOIN civicrm_contribution as memberbook_contribution on memberbook_payment.contribution_id = memberbook_contribution.id
-            LEFT JOIN civicrm_line_item as memberbook_line_item on memberbook_line_item.contribution_id = memberbook_contribution.id
-            LEFT JOIN civicrm_price_field_value as memberbook_price_field_value on memberbook_price_field_value.id = memberbook_line_item.price_field_value_id
-            LEFT JOIN civicrm_price_field as memberbook_price_field on memberbook_price_field.id = memberbook_line_item.price_field_id
-            ";
     }
 
     protected function sortColumns(): array
