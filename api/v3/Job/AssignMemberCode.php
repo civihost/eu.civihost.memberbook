@@ -26,7 +26,7 @@ function _civicrm_api3_job_assign_member_code_spec(&$spec)
  *
  * @see civicrm_api3_create_success
  *
- * @throws API_Exception
+ * @throws CRM_Core_Exception
  */
 function civicrm_api3_job_assign_member_code($params)
 {
