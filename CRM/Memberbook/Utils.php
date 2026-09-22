@@ -10,7 +10,7 @@ class CRM_Memberbook_Utils
         if (count($extends) == 0) {
             $extends = ['Contact', 'Individual', 'Organization', 'Household', 'Contribution', 'Membership'];
         }
-        $options = array('' => E::ts('None'));
+        $options = ['' => E::ts('None')];
         $customGroups = self::getCustomGroups($extends);
 
         if (!empty($customGroups)) {
