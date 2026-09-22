@@ -16,7 +16,7 @@ trait CRM_Memberbook_MemberbookTrait
             $sql = 'select 0 where 1=0';
             $message = 'You must choose one or more membership types from the filters tab before running this report';
             $title = 'Choose one or more membership types';
-            CRM_Core_Session::setStatus($message, $title, $type = 'error', $options = array('expires' => 0));
+            CRM_Core_Session::setStatus($message, $title, $type = 'error', $options = ['expires' => 0]);
         }
         $sql = str_replace("(SELECT SQL_CALC_FOUND_ROWS", "(SELECT", $sql);
         return $sql;
